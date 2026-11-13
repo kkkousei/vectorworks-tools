@@ -4,9 +4,10 @@
 #
 # 第2版：品目が固定棚のとき、オブジェクト情報パレットの「棚柱」「金物」を隠す。
 #   プラグイン定義の「イベントに対応」がオンのときだけ効く。オフのままでも、棚の描き方は第1版と同じ。
-import vs
+import vs, os, json
 
-VERSION = '棚 v2（2026-11-13）'
+VERSION = '棚 v2.1（2026-11-13 調査用）'
+DEBUG = True        # True のあいだ、棚の記号の下に調査用の小さな文字を出す
 MOJI = 5.7          # 記号の文字の大きさ
 KAKUSU = ['Tanabashira', 'Kanamono']   # 固定棚のとき隠す欄
 KAKUSU_HINMOKU = ['固定棚']            # 隠す品目
@@ -16,6 +17,30 @@ kObjOnWidgetPrep = 41
 kObjXPropHasUIOverride = 8
 kObjXHasCustomWidgetVisibilities = 12
 kObjectEventHandled = -8
+
+LOG = os.path.join(os.environ.get('APPDATA', os.path.expanduser('~')), 'hako_vectorworks_tools', 'tana_debug.json')
+
+
+def log_read():
+    try:
+        with open(LOG, encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def log_add(key, extra=None):
+    if not DEBUG:
+        return
+    d = log_read()
+    d[key] = d.get(key, 0) + 1
+    if extra is not None:
+        d[key + '_last'] = extra
+    try:
+        with open(LOG, 'w', encoding='utf-8') as f:
+            json.dump(d, f, ensure_ascii=False)
+    except Exception:
+        pass
 
 
 def draw():
@@ -51,24 +76,41 @@ def draw():
     vs.TextVerticalAlign(3)
     vs.MoveTo(0, 0)
     vs.CreateText(code)
+    t = vs.LNewObj()
     if W > L:
-        vs.HRotate(vs.LNewObj(), (0, 0), 90)
+        vs.HRotate(t, (0, 0), 90)
+
+    if DEBUG:
+        d = log_read()
+        info = VERSION + ' / ev=' + str(EVENT) + ' / init=' + str(d.get('init', 0)) + ' / prep=' + str(d.get('prep', 0)) + ' / ' + str(d.get('prep_last', ''))
+        vs.TextSize(3)
+        vs.MoveTo(0, -W / 2 - 50)
+        vs.CreateText(info)
 
 
 def widget_prep():
     ok, name, oh, rh, wh = vs.GetCustomObjectInfo()
+    msg = 'ok=' + str(ok)
     if ok:
-        kakusu = vs.GetRField(oh, name, 'Hinmoku') in KAKUSU_HINMOKU
+        hin = vs.GetRField(oh, name, 'Hinmoku')
+        kakusu = hin in KAKUSU_HINMOKU
+        msg += ' hin=' + hin + ' kakusu=' + str(kakusu)
         for p in KAKUSU:
-            vs.SetParameterVisibility(oh, p, not kakusu)
+            try:
+                vs.SetParameterVisibility(oh, p, not kakusu)
+            except Exception as e:
+                msg += ' err=' + str(e)[:40]
+    log_add('prep', msg)
     vs.vsoSetEventResult(kObjectEventHandled)
 
 
 theEvent, theButton = vs.vsoGetEventInfo()
+EVENT = theEvent
 if theEvent == kObjOnInitXProperties:
-    vs.SetObjPropVS(kObjXPropHasUIOverride, True)
-    vs.SetObjPropVS(kObjXHasCustomWidgetVisibilities, True)
+    a = vs.SetObjPropVS(kObjXPropHasUIOverride, True)
+    b = vs.SetObjPropVS(kObjXHasCustomWidgetVisibilities, True)
     vs.vsoInsertAllParams()
+    log_add('init', 'ui=' + str(a) + ' vis=' + str(b))
 elif theEvent == kObjOnWidgetPrep:
     widget_prep()
 else:
