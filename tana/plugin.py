@@ -6,7 +6,7 @@
 #   プラグイン定義の「イベントに対応」がオンのときだけ効く。オフのままでも、棚の描き方は第1版と同じ。
 import vs, os, json
 
-VERSION = '棚 v2.1（2026-11-13 調査用）'
+VERSION = '棚 v2.2（2026-11-13 調査用）'
 DEBUG = True        # True のあいだ、棚の記号の下に調査用の小さな文字を出す
 MOJI = 5.7          # 記号の文字の大きさ
 KAKUSU = ['Tanabashira', 'Kanamono']   # 固定棚のとき隠す欄
@@ -82,7 +82,8 @@ def draw():
 
     if DEBUG:
         d = log_read()
-        info = VERSION + ' / ev=' + str(EVENT) + ' / init=' + str(d.get('init', 0)) + ' / prep=' + str(d.get('prep', 0)) + ' / ' + str(d.get('prep_last', ''))
+        evs = ' '.join(k + ':' + str(v) for k, v in sorted(d.items()) if k.startswith('ev') and not k.endswith('_last'))
+        info = VERSION + ' / ' + evs + ' / init=' + str(d.get('init', 0)) + ' ' + str(d.get('init_last', '')) + ' / prep=' + str(d.get('prep', 0))
         vs.TextSize(3)
         vs.MoveTo(0, -W / 2 - 50)
         vs.CreateText(info)
@@ -106,6 +107,7 @@ def widget_prep():
 
 theEvent, theButton = vs.vsoGetEventInfo()
 EVENT = theEvent
+log_add('ev' + str(theEvent))
 if theEvent == kObjOnInitXProperties:
     a = vs.SetObjPropVS(kObjXPropHasUIOverride, True)
     b = vs.SetObjPropVS(kObjXHasCustomWidgetVisibilities, True)
