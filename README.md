@@ -45,7 +45,7 @@ exec(compile(open(path, encoding='utf-8').read(), path, 'exec'))
 ```
 
 ## 棚（tana）
-- プラグイン「棚」：3点型オブジェクト。置く・コピーすると白い四角と記号（SH-〇）が出る。記号が空なら次の番号が付く。
+- プラグイン「棚」：3点型オブジェクト。置く・コピーすると白い四角と記号（SH-〇）が出る。記号が空なら次の番号が付く。品目が固定棚なら「棚柱」「金物」の欄を隠す（プラグイン定義の「イベントに対応」をオンにしたときだけ）。
 - パラメータ（名前／表示名／型）：Kigou 記号 Text、Hinmoku 品目 Pop-up、Zairyo 材料 Pop-up、Iro 色 Text、Maisu 枚数 Integer、Tanabashira 棚柱 Pop-up、Kanamono 金物 Pop-up、OkuFukai 奥行が深い Boolean、Bikou 備考 Text（LineLength・BoxWidth は3点型に最初からある）。
   - 品目：未選択／固定棚／可動棚／枕棚＋HP／その他
   - 材料：未選択／仕上げてる棚板／白ポリ／ラワン合板／ラワンランバーコア／シナ合板／シナランバーコア／その他
