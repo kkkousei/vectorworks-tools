@@ -21,7 +21,8 @@ cols = [
     ('金物の色', "=IF(" + KOTEI + ", '', IF(" + R + "'Kanamono'='未選択', '【未選択】', " + R + "'Kanamono'))"),
     ('備考',     "=" + R + "'Bikou'"),
 ]
-AUTO = "=RUNSCRIPT('棚の番号_自動')"
+# 番号の自動振り直し：「AI」ボタンがある図面は AI から、ない古い図面はスクリプト「棚の番号_自動」から
+AUTO = "=RUNSCRIPT('AI', 'bangou')" if vs.GetObject('AI') else "=RUNSCRIPT('棚の番号_自動')"
 
 ws = vs.GetObject(WS_NAME)
 if ws is None:
