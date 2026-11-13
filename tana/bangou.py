@@ -6,6 +6,26 @@ import vs
 PIO = '棚'
 items = []
 
+# 幅（LineLength）が間口になるようにそろえる。
+# 間口の方が長い棚（ふつう）：幅 >= 奥行。「奥行が深い」にチェックした棚：幅 <= 奥行。
+# 逆になっている棚は、中心で90度回して幅と奥行を入れ替える（図面の上の形は変わらない）。
+def soroeru(h):
+    try:
+        L = float(vs.GetRField(h, PIO, 'LineLength'))
+        W = float(vs.GetRField(h, PIO, 'BoxWidth'))
+    except ValueError:
+        return
+    fukai = vs.GetRField(h, PIO, 'OkuFukai') in ('True', 'TRUE', 'true', '1')
+    gyaku = (L < W) if not fukai else (L > W)
+    if gyaku:
+        (x1, y1), (x2, y2) = vs.GetBBox(h)
+        vs.HRotate(h, ((x1 + x2) / 2, (y1 + y2) / 2), 90)
+        vs.SetRField(h, PIO, 'LineLength', str(W))
+        vs.SetRField(h, PIO, 'BoxWidth', str(L))
+        vs.ResetObject(h)
+
+vs.ForEachObject(soroeru, "(PON='" + PIO + "')")
+
 
 def cb(h):
     k = vs.GetRField(h, PIO, 'Kigou')
