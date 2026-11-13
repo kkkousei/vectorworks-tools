@@ -6,8 +6,8 @@
 #   プラグイン定義の「イベントに対応」がオンのときだけ効く。オフのままでも、棚の描き方は第1版と同じ。
 import vs, os, json
 
-VERSION = '棚 v2.3（2026-11-13 調査用）'
-DEBUG = True        # True のあいだ、棚の記号の下に調査用の小さな文字を出す
+VERSION = '棚 v2.4（2026-11-13）'
+DEBUG = False       # True のあいだ、棚の記号の下に調査用の小さな文字を出す
 MOJI = 5.7          # 記号の文字の大きさ
 # オブジェクト情報パレットに出す欄（並び順・表示名）。番号は欄の出し入れに使う
 PARAMS = [('LineLength', '幅'), ('BoxWidth', '奥行'), ('Kigou', '記号'), ('Hinmoku', '品目'),
@@ -101,6 +101,11 @@ def widget_prep():
         kakusu = hin in KAKUSU_HINMOKU
         msg += ' hin=' + hin + ' kakusu=' + str(kakusu)
         for i, (p, label) in enumerate(PARAMS, start=1):
+            if p in ('LineLength', 'BoxWidth'):
+                try:
+                    vs.vsoWidgetSetText(i, label)   # 英語の欄名を日本語に（効かなければそのまま）
+                except Exception:
+                    pass
             if p in KAKUSU:
                 try:
                     vs.vsoWidgetSetVisible(i, not kakusu)
