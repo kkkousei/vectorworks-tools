@@ -6,9 +6,13 @@
 #   プラグイン定義の「イベントに対応」がオンのときだけ効く。オフのままでも、棚の描き方は第1版と同じ。
 import vs, os, json
 
-VERSION = '棚 v2.2（2026-11-13 調査用）'
+VERSION = '棚 v2.3（2026-11-13 調査用）'
 DEBUG = True        # True のあいだ、棚の記号の下に調査用の小さな文字を出す
 MOJI = 5.7          # 記号の文字の大きさ
+# オブジェクト情報パレットに出す欄（並び順・表示名）。番号は欄の出し入れに使う
+PARAMS = [('LineLength', '幅'), ('BoxWidth', '奥行'), ('Kigou', '記号'), ('Hinmoku', '品目'),
+          ('Zairyo', '材料'), ('Iro', '色'), ('Maisu', '枚数'), ('Tanabashira', '棚柱'),
+          ('Kanamono', '金物'), ('OkuFukai', '奥行が深い'), ('Bikou', '備考')]
 KAKUSU = ['Tanabashira', 'Kanamono']   # 固定棚のとき隠す欄
 KAKUSU_HINMOKU = ['固定棚']            # 隠す品目
 
@@ -96,11 +100,12 @@ def widget_prep():
         hin = vs.GetRField(oh, name, 'Hinmoku')
         kakusu = hin in KAKUSU_HINMOKU
         msg += ' hin=' + hin + ' kakusu=' + str(kakusu)
-        for p in KAKUSU:
-            try:
-                vs.SetParameterVisibility(oh, p, not kakusu)
-            except Exception as e:
-                msg += ' err=' + str(e)[:40]
+        for i, (p, label) in enumerate(PARAMS, start=1):
+            if p in KAKUSU:
+                try:
+                    vs.vsoWidgetSetVisible(i, not kakusu)
+                except Exception as e:
+                    msg += ' err=' + str(e)[:40]
     log_add('prep', msg)
     vs.vsoSetEventResult(kObjectEventHandled)
 
@@ -111,8 +116,13 @@ log_add('ev' + str(theEvent))
 if theEvent == kObjOnInitXProperties:
     a = vs.SetObjPropVS(kObjXPropHasUIOverride, True)
     b = vs.SetObjPropVS(kObjXHasCustomWidgetVisibilities, True)
-    vs.vsoInsertAllParams()
-    log_add('init', 'ui=' + str(a) + ' vis=' + str(b))
+    res = []
+    for i, (p, label) in enumerate(PARAMS, start=1):
+        try:
+            res.append(str(vs.vsoAddParamWidget(i, p, label))[0])
+        except Exception as e:
+            res.append('E')
+    log_add('init', 'ui=' + str(a) + ' vis=' + str(b) + ' w=' + ''.join(res))
 elif theEvent == kObjOnWidgetPrep:
     widget_prep()
 else:
