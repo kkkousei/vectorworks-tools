@@ -141,12 +141,13 @@ else:
                 lines.append(label + '：' + want[k])
         vs.AlrtDialog('\n'.join(lines + _msgs))
 
-# 試しの間の記録（ドライブの 00_AI・仕組み に置く。Claude が読む）
+# 試しの間の記録：画面に出し、図面と同じフォルダにも残す（Claude が読む）
 _log += _msgs
-try:
-    import time
-    if _root[0]:
-        with open(os.path.join(_root[0], '00_AI・仕組み', '図枠の記録.txt'), 'a', encoding='utf-8') as f:
+if '試し' in _fname:
+    vs.AlrtDialog('【図枠の試し】\n' + '\n'.join(_log)[:1500])
+    try:
+        import time
+        with open(os.path.join(os.path.dirname(_fpath), '図枠の記録.txt'), 'a', encoding='utf-8') as f:
             f.write(time.strftime('%Y-%m-%d %H:%M:%S') + ' ' + _mode + '\n' + '\n'.join(_log) + '\n\n')
-except Exception:
-    pass
+    except Exception:
+        pass

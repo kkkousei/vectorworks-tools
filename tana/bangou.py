@@ -71,8 +71,10 @@ if '試し' in (vs.GetFName() or ''):
         exec(_load('ai/zuwaku.py'), {'ZUWAKU_MODE': 'auto'})
     except Exception:
         # 試しの間：エラーを記録する（ドライブの 00_AI・仕組み があればそこ、なければ控えの場所）
+        import traceback
+        vs.AlrtDialog('【図枠の試し：エラー】\n' + traceback.format_exc()[-1200:])
         try:
-            import os, traceback, time
+            import os, time
             d = os.path.dirname(vs.GetFPathName() or '')
             out = os.path.join(os.environ.get('APPDATA', os.path.expanduser('~')), 'hako_vectorworks_tools')
             while d and os.path.dirname(d) != d:
