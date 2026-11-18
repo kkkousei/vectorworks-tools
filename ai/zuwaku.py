@@ -24,6 +24,8 @@ except NameError:
 _fname = vs.GetFName() or ''
 _fpath = vs.GetFPathName() or ''
 _msgs = []
+_log = ['ファイル ' + _fname, '場所 ' + _fpath]
+_root = [None]
 
 
 def _plan_name(rest):
@@ -46,6 +48,7 @@ def _tanto():
                 code = mm.group(1)
         if os.path.exists(os.path.join(d, CSV_NAME)):
             root = d
+            _root[0] = d
             break
         d = os.path.dirname(d)
     if code is None:
@@ -86,29 +89,46 @@ else:
         texts.append((h, s, vs.GetParent(h), min(x1, x2), max(y1, y2), max(x1, x2), min(y1, y2)))
 
     vs.ForEachObject(_cb, "(INSYMBOL & INVIEWPORT & (T=TEXT))")
+    _log.append('入れたい ' + repr(want) + ' 文字の数 ' + str(len(texts)))
+
+    def _lines(s):
+        return re.split(r'\r\n|\r|\n', s)
+
+    def _keys(s):
+        return [LABELS.get(l.strip().lower().rstrip('.:： ')) for l in _lines(s)]
 
     targets = []   # (h, 今の文字, 入れる文字)
     for h, s, p, x1, y1, x2, y2 in texts:
         if PAT_TEXT.fullmatch(s):
             targets.append((h, s, want['date']))
-        key = LABELS.get(s.lower().rstrip('.:： '))
-        if key and key in want:
-            cy, hh = (y1 + y2) / 2, (y1 - y2)
-            best = None
-            for h2, s2, p2, a1, b1, a2, b2 in texts:
-                if p2 != p or h2 == h or a1 <= x2:
-                    continue
-                if abs((b1 + b2) / 2 - cy) > max(hh, b1 - b2) * 0.6:
-                    continue
-                if LABELS.get(s2.lower().rstrip('.:： ')):
-                    continue
-                if best is None or a1 < best[1]:
-                    best = (h2, a1, s2)
-            if best:
-                targets.append((best[0], best[2], want[key]))
+        keys = _keys(s)
+        if not any(keys):
+            continue
+        _log.append('見出し ' + repr(s))
+        cy, hh = (y1 + y2) / 2, (y1 - y2)
+        best = None
+        for h2, s2, p2, a1, b1, a2, b2 in texts:
+            if p2 != p or h2 == h or a1 <= x2 or any(_keys(s2)):
+                continue
+            if abs((b1 + b2) / 2 - cy) > max(hh, b1 - b2) * 0.6:
+                continue
+            if best is None or a1 < best[1]:
+                best = (h2, a1, s2)
+        if not best:
+            _log.append('  右に文字なし')
+            continue
+        _log.append('  右の文字 ' + repr(best[2]))
+        vals = _lines(best[2])
+        if len(vals) != len(keys):
+            _log.append('  行の数が違うので触らない')
+            continue
+        sep = '\r' if '\r' in best[2] else '\n'
+        newvals = [want[k] if k in want else v for k, v in zip(keys, vals)]
+        targets.append((best[0], best[2], sep.join(newvals)))
 
     n = 0
     for h, s, new in targets:
+        _log.append('直す ' + repr(s) + ' → ' + repr(new))
         if s != new:
             vs.SetText(h, new)
             vs.ResetObject(h)
@@ -120,3 +140,13 @@ else:
             if k in want:
                 lines.append(label + '：' + want[k])
         vs.AlrtDialog('\n'.join(lines + _msgs))
+
+# 試しの間の記録（ドライブの 00_AI・仕組み に置く。Claude が読む）
+_log += _msgs
+try:
+    import time
+    if _root[0]:
+        with open(os.path.join(_root[0], '00_AI・仕組み', '図枠の記録.txt'), 'a', encoding='utf-8') as f:
+            f.write(time.strftime('%Y-%m-%d %H:%M:%S') + ' ' + _mode + '\n' + '\n'.join(_log) + '\n\n')
+except Exception:
+    pass

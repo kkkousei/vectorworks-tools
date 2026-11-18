@@ -70,7 +70,20 @@ if '試し' in (vs.GetFName() or ''):
     try:
         exec(_load('ai/zuwaku.py'), {'ZUWAKU_MODE': 'auto'})
     except Exception:
-        pass
+        # 試しの間：エラーを記録する（ドライブの 00_AI・仕組み があればそこ、なければ控えの場所）
+        try:
+            import os, traceback, time
+            d = os.path.dirname(vs.GetFPathName() or '')
+            out = os.path.join(os.environ.get('APPDATA', os.path.expanduser('~')), 'hako_vectorworks_tools')
+            while d and os.path.dirname(d) != d:
+                if os.path.isdir(os.path.join(d, '00_AI・仕組み')):
+                    out = os.path.join(d, '00_AI・仕組み')
+                    break
+                d = os.path.dirname(d)
+            with open(os.path.join(out, '図枠の記録.txt'), 'a', encoding='utf-8') as f:
+                f.write(time.strftime('%Y-%m-%d %H:%M:%S') + ' エラー\n' + traceback.format_exc() + '\n')
+        except Exception:
+            pass
 
 vs.WSScript_SetResStr('')
 
