@@ -1,7 +1,10 @@
 # 図枠（タイトル欄）を、ファイル名と案件台帳にそろえる
 #  - Date.      ：ファイル名の頭の日付（「2026.11.18_〇〇様邸.vwx」→ 2026.11.18）
-#  - Plan Name  ：ファイル名の日付のあと（「〇〇様邸」。「試し」「_ver2」などは外す）
-#  - Designer・Director：図面があるフォルダ名の頭の引合コード（「〇〇〇〇〇_〇〇様」）で、
+#  - Plan Name  ：ファイル名の日付のあと（「〇〇様邸」。「試し」「_ver2」などは外す）。
+#    シンボル「邸名」があれば、その中の文字を書き換える（全部の紙面が一度にそろう）
+#  - Designer   ：今はデザイナーが1人なので触らない
+#  - Director   ：担当一覧にあるディレクターの名前だけの文字を、この案件のディレクターにする
+#  - 引合コード：図面があるフォルダ名の頭の引合コード（「〇〇〇〇〇_〇〇様」）で、
 #    Googleドライブの「00_AI・仕組み/図面の担当一覧.csv」を引く（案件台帳から書き出したもの）。
 #    名前は GitHub に入れない（このファイルは公開）。
 # 日付：日付だけが書いてある文字（例 2026.11.06）をすべて書き換える。
@@ -26,6 +29,8 @@ _fpath = vs.GetFPathName() or ''
 _msgs = []
 _log = ['ファイル ' + _fname, '場所 ' + _fpath]
 _root = [None]
+_directors = set()   # 担当一覧にあるディレクターの名前（この名前だけの文字を書き換える）
+SYM_PLAN = '邸名'     # Plan Name を入れるシンボルの名前（中の文字を書き換える）
 
 
 def _plan_name(rest):
@@ -59,6 +64,10 @@ def _tanto():
         return None
     with open(os.path.join(root, CSV_NAME), encoding='utf-8-sig', newline='') as f:
         for row in csv.reader(f):
+            if len(row) >= 3 and row[2].strip() and row[0].strip() != '引合コード':
+                _directors.add(row[2].strip())
+        f.seek(0)
+        for row in csv.reader(f):
             if row and row[0].strip() == code and len(row) >= 3:
                 return row[1].strip(), row[2].strip()
     _msgs.append('担当一覧に引合コード ' + code + ' がないので、Designer・Director はそのままにしました。')
@@ -76,8 +85,6 @@ else:
         want['plan'] = plan
     t = _tanto()
     if t:
-        if t[0]:
-            want['designer'] = t[0]
         if t[1]:
             want['director'] = t[1]
 
@@ -101,6 +108,8 @@ else:
     for h, s, p, x1, y1, x2, y2 in texts:
         if PAT_TEXT.fullmatch(s):
             targets.append((h, s, want['date']))
+        if 'director' in want and s in _directors:
+            targets.append((h, s, want['director']))
         keys = _keys(s)
         if not any(keys):
             continue
@@ -125,6 +134,19 @@ else:
         sep = '\r' if '\r' in best[2] else '\n'
         newvals = [want[k] if k in want else v for k, v in zip(keys, vals)]
         targets.append((best[0], best[2], sep.join(newvals)))
+
+    # Plan Name：シンボル「邸名」の中の文字（1つだけのとき）
+    sd = vs.GetObject(SYM_PLAN)
+    if 'plan' in want and sd:
+        inner = []
+        h = vs.FInSymDef(sd)
+        while h:
+            if vs.GetTypeN(h) == 10:
+                inner.append(h)
+            h = vs.NextObj(h)
+        _log.append('シンボル「' + SYM_PLAN + '」の中の文字 ' + str(len(inner)) + 'つ')
+        if len(inner) == 1:
+            targets.append((inner[0], (vs.GetText(inner[0]) or '').strip(), want['plan']))
 
     n = 0
     for h, s, new in targets:
