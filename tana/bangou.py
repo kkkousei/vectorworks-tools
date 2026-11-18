@@ -47,7 +47,7 @@ for i, (n, _, _, h, old) in enumerate(items, start=1):
         vs.ResetObject(h)
         changed = True
 
-# 図面の日付をファイル名の日付にそろえる（本体は ai/hiduke.py）
+# 図枠（日付・Plan Name・Designer・Director）をそろえる（本体は ai/zuwaku.py）
 # 試し中：ファイル名に「試し」が入っている図面だけで動かす
 def _load(name):
     import os, time, urllib.request
@@ -68,7 +68,7 @@ def _load(name):
 
 if '試し' in (vs.GetFName() or ''):
     try:
-        exec(_load('ai/hiduke.py'), {'HIDUKE_MODE': 'text'})
+        exec(_load('ai/zuwaku.py'), {'ZUWAKU_MODE': 'auto'})
     except Exception:
         pass
 

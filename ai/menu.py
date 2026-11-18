@@ -13,11 +13,11 @@ MENU = [
     ('棚を1つ置く（画面の真ん中に置く）', 'tana/oku.py'),
     ('棚表を作り直す', 'tana/hyou.py'),
     ('古い描き方の棚（四角形＋レコード「仕様」）を「棚」に置き換える', 'tana/okikae.py'),
-    ('図面の日付をファイル名の日付にそろえる', 'ai/hiduke.py'),
+    ('図枠（日付・Plan Name・Designer・Director）をファイル名と案件台帳にそろえる', 'ai/zuwaku.py'),
 ]
 
 # 表の中から呼ばれたとき（引数つき）に動かすもの
-AUTO = {'bangou': 'tana/bangou.py', 'hiduke': 'ai/hiduke.py'}
+AUTO = {'bangou': 'tana/bangou.py'}
 
 
 def load(name):
