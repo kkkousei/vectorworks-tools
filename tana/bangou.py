@@ -47,6 +47,31 @@ for i, (n, _, _, h, old) in enumerate(items, start=1):
         vs.ResetObject(h)
         changed = True
 
+# 図面の日付をファイル名の日付にそろえる（本体は ai/hiduke.py）
+# 試し中：ファイル名に「試し」が入っている図面だけで動かす
+def _load(name):
+    import os, time, urllib.request
+    d = os.path.join(os.environ.get('APPDATA', os.path.expanduser('~')), 'hako_vectorworks_tools')
+    path = os.path.join(d, name.replace('/', '_'))
+    if not os.path.exists(path) or time.time() - os.path.getmtime(path) > 300:
+        try:
+            with urllib.request.urlopen('https://raw.githubusercontent.com/kkkousei/vectorworks-tools/main/' + name, timeout=5) as r:
+                code = r.read()
+            os.makedirs(d, exist_ok=True)
+            with open(path, 'wb') as f:
+                f.write(code)
+        except Exception:
+            if os.path.exists(path):
+                os.utime(path, None)
+    return compile(open(path, encoding='utf-8').read(), path, 'exec')
+
+
+if '試し' in (vs.GetFName() or ''):
+    try:
+        exec(_load('ai/hiduke.py'), {'HIDUKE_MODE': 'text'})
+    except Exception:
+        pass
+
 vs.WSScript_SetResStr('')
 
 # 番号が変わったときだけ、棚表をもう一度計算し直す（2回目は変わらないので止まる）
