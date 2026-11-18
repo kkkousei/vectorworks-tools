@@ -11,7 +11,7 @@
 # Plan Name など：見出しの文字（Plan Name / Designer / Director）の右、同じ高さにある文字を書き換える。
 # シンボルの中・ビューポートの注釈の中も見る。見つからない所・分からない所は触らない。
 # 動かし方（ZUWAKU_MODE）：なし＝「AI」ボタンから（結果を知らせる）／'auto'＝棚の番号の自動振り直しから（何も出さない）
-import vs, os, re, csv
+import vs, os, re, csv, io
 
 PAT_FILE = re.compile(r'\s*(\d{4})[.\-_/]?(\d{1,2})[.\-_/]?(\d{1,2})[\s._\-]*(.*)$')
 PAT_TEXT = re.compile(r'\d{4}\s*[.\-/]\s*\d{1,2}\s*[.\-/]\s*\d{1,2}')
@@ -62,7 +62,7 @@ def _tanto():
     if root is None:
         _msgs.append('「00_AI・仕組み/図面の担当一覧.csv」が見つからないので、Designer・Director はそのままにしました。')
         return None
-    with open(os.path.join(root, CSV_NAME), encoding='utf-8-sig', newline='') as f:
+    with io.open(os.path.join(root, CSV_NAME), encoding='utf-8-sig', newline='') as f:
         for row in csv.reader(f):
             if len(row) >= 3 and row[2].strip() and row[0].strip() != '引合コード':
                 _directors.add(row[2].strip())
@@ -169,7 +169,7 @@ if '試し' in _fname:
     vs.AlrtDialog('【図枠の試し】\n' + '\n'.join(_log)[:1500])
     try:
         import time
-        with open(os.path.join(os.path.dirname(_fpath), '図枠の記録.txt'), 'a', encoding='utf-8') as f:
+        with io.open(os.path.join(os.path.dirname(_fpath), '図枠の記録.txt'), 'a', encoding='utf-8') as f:
             f.write(time.strftime('%Y-%m-%d %H:%M:%S') + ' ' + _mode + '\n' + '\n'.join(_log) + '\n\n')
     except Exception:
         pass

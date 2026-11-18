@@ -68,7 +68,8 @@ def _load(name):
 
 if '試し' in (vs.GetFName() or ''):
     try:
-        exec(_load('ai/zuwaku.py'), {'ZUWAKU_MODE': 'auto'})
+        ZUWAKU_MODE = 'auto'
+        exec(_load('ai/zuwaku.py'), globals())   # 新しい辞書で動かすと open が使えない（2026-11-18 分かった）
     except Exception:
         # 試しの間：エラーを記録する（ドライブの 00_AI・仕組み があればそこ、なければ控えの場所）
         import traceback
